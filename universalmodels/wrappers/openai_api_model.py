@@ -8,7 +8,7 @@ from transformers.generation.utils import GenerateOutput
 
 from ..logger import root_logger
 from ..mock_tokenizer import MockTokenizer
-from ..interface import GLOBAL_SEED
+from ..constants import GLOBAL_SEED
 from ..fastchat import FastChatController
 
 

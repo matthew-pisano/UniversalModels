@@ -1,8 +1,6 @@
-import os
 from enum import Enum
 
 import torch
-import transformers
 from transformers import PreTrainedModel, PreTrainedTokenizer, LlamaTokenizer, AutoTokenizer, AutoModelForCausalLM, LlamaForCausalLM, AutoModel
 
 from .fastchat import FastChatController
@@ -11,22 +9,6 @@ from .mock_tokenizer import MockTokenizer
 from .wrappers.dev_model import DevModel
 from .wrappers.hf_api_model import HFAPIModel
 from .wrappers.openai_api_model import OpenAIAPIModel
-
-GLOBAL_SEED = None
-
-
-def set_seed(seed: int):
-    """Sets the global random seed for keeping inference as deterministic as possible
-
-    Args:
-        seed: The seed to set"""
-
-    global GLOBAL_SEED
-    print(f"Setting random seed to {seed}")
-    GLOBAL_SEED = seed
-    transformers.set_seed(GLOBAL_SEED)
-    # Set a fixed value for the hash seed
-    os.environ["PYTHONHASHSEED"] = str(GLOBAL_SEED)
 
 
 class ModelSrc(Enum):

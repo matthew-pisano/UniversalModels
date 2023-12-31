@@ -31,7 +31,8 @@ Installing the `fastchat` extra enables support for using fastchat on compatible
 
 ```python
 import torch
-from universalmodels import set_seed, pretrained_from_name
+from universalmodels import pretrained_from_name
+from universalmodels.constants import set_seed
 
 # Set the global seed to encourage deterministic generation 
 # NOTE: DOES NOT affect OpenAI API models

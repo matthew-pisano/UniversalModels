@@ -1,6 +1,13 @@
 import pytest
 
 
+def test_import_all():
+    try:
+        import universalmodels
+    except ImportError as e:
+        raise AssertionError(str(e))
+
+
 def test_import_dev_wrapper():
     try:
         from universalmodels import DevModel
@@ -31,6 +38,13 @@ def test_import_fastchat_controller():
 
 def test_import_interface():
     try:
-        from universalmodels import set_seed, ModelSrc, model_info_from_name, GLOBAL_SEED
+        from universalmodels import ModelSrc, model_info_from_name
+    except ImportError as e:
+        raise AssertionError(str(e))
+
+
+def test_constants():
+    try:
+        from universalmodels.constants import set_seed, GLOBAL_SEED
     except ImportError as e:
         raise AssertionError(str(e))
