@@ -44,6 +44,9 @@ class HFAPIModel(PreTrainedModel):
         Returns:
             The generated response tokens"""
 
+        if len(inputs.shape) != 2:
+            raise ValueError("Inputs must be 2D tensors of input token IDs (Ex. Tensor([[101, 98, ...], [...], ...]))")
+
         inference_client = InferenceClient(model=self.name_or_path, token=os.environ.get("HF_API_KEY"), timeout=timeout)
 
         tokenizer = MockTokenizer(self.name_or_path)

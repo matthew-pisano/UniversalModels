@@ -38,18 +38,22 @@ from universalmodels.constants import set_seed
 # NOTE: DOES NOT affect OpenAI API models
 set_seed(42)
 
+# Huggingface model example
 hf_model_name = "mistralai/Mixtral-8x7B-Instruct-v0.1"
 hf_model, hf_tokenizer = pretrained_from_name(hf_model_name)
 
 hf_tokens = hf_tokenizer.encode("Repeat the following: 'Hello there from a huggingface model'")
-hf_response = hf_model.generate(torch.Tensor([hf_tokens]).int())
+hf_resp_tokens = hf_model.generate(torch.Tensor([hf_tokens]).int())[0]
+hf_response = hf_tokenizer.decode(hf_resp_tokens)
 print(hf_response)
 
+# OpenAI model example
 oai_model_name = "openai/gpt-3.5"
 oai_model, oai_tokenizer = pretrained_from_name(oai_model_name)
 
 oai_tokens = oai_tokenizer.encode("Repeat the following: 'Hello there from an openai model'")
-oai_response = oai_model.generate(torch.Tensor([oai_tokens]).int())
+oai_resp_tokens = oai_model.generate(torch.Tensor([oai_tokens]).int())[0]
+oai_response = oai_tokenizer.decode(oai_resp_tokens)
 print(oai_response)
 ```
 

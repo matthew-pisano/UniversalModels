@@ -52,7 +52,7 @@ class ModelInfo:
             return False
 
 
-def model_info_from_name(target_model_name: str, model_src: ModelSrc = ModelSrc.AUTO) -> ModelInfo:
+def model_info_from_name(target_model_name: str, model_src: ModelSrc = ModelSrc.AUTO, model_task: str = None) -> ModelInfo:
     """Gets information for creating a framework model from the name of the underlying model. Agnostic of which framework model this is being used for
 
     Args:
@@ -73,7 +73,7 @@ def model_info_from_name(target_model_name: str, model_src: ModelSrc = ModelSrc.
         case ModelSrc.DEV:
             return ModelInfo(target_model_name, ModelSrc.DEV, None, None)
         case ModelSrc.HF_API:
-            return ModelInfo(target_model_name, ModelSrc.HF_API, None, None)
+            return ModelInfo(target_model_name, ModelSrc.HF_API, None, None, model_task=model_task)
         case ModelSrc.OPENAI_API:
             model_info = ModelInfo(target_model_name, ModelSrc.OPENAI_API, None, None)
             if target_model_name.startswith("openai/"):
@@ -122,7 +122,7 @@ def pretrained_from_info(model_info: ModelInfo) -> tuple[PreTrainedModel, PreTra
             return model, model_info.tokenizer_class.from_pretrained(model_info.pretrained_model_name_or_path)
 
 
-def pretrained_from_name(model_name: str, model_src: ModelSrc = ModelSrc.AUTO):
+def pretrained_from_name(model_name: str, model_src: ModelSrc = ModelSrc.AUTO, model_task: str = None):
     """Gets the pretrained model and tokenizer from the given model name
 
     Args:
@@ -131,4 +131,4 @@ def pretrained_from_name(model_name: str, model_src: ModelSrc = ModelSrc.AUTO):
     Returns:
         A transformers pretrained model and tokenizer for usage within the framework"""
 
-    return pretrained_from_info(model_info_from_name(model_name, model_src))
+    return pretrained_from_info(model_info_from_name(model_name, model_src=model_src, model_task=model_task))

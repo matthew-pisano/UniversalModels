@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import Optional
 
 import torch
@@ -6,6 +7,13 @@ from transformers.generation.utils import GenerateOutput
 
 from ..mock_tokenizer import MockTokenizer
 from ..logger import root_logger
+
+
+class DevModelEnum(Enum):
+    """An enum of the valid dev models"""
+
+    HUMAN = "dev/human"
+    ECHO = "dev/echo"
 
 
 class DevModel(PreTrainedModel):
@@ -18,6 +26,8 @@ class DevModel(PreTrainedModel):
 
         if not model_name.startswith("dev"):
             raise ValueError("Dev models must have names in the form of 'dev/*'")
+        if model_name not in [model.value for model in DevModelEnum]:
+            raise ValueError(f"Unknown dev model '{model_name}'")
 
         self.name_or_path = model_name
 
@@ -30,25 +40,29 @@ class DevModel(PreTrainedModel):
         Returns:
             The generated response tokens"""
 
+        if len(inputs.shape) != 2:
+            raise ValueError("Inputs must be 2D tensors of input token IDs (Ex. Tensor([[101, 98, ...], [...], ...]))")
+
         tokenizer = MockTokenizer(self.name_or_path)
         responses = []
 
         for encoded_prompt in inputs:
             prompt = tokenizer.decode(encoded_prompt.tolist())
 
-            if self.name_or_path.endswith("human"):
-                resp = self.generate_manual(prompt)
-            elif self.name_or_path.endswith("echo"):
-                resp = self.generate_echo(prompt)
-            else:
-                raise ValueError(f"Could not find dev model with name '{self.name_or_path}'")
+            match self.name_or_path:
+                case DevModelEnum.HUMAN.value:
+                    resp = self._generate_manual(prompt)
+                case DevModelEnum.ECHO.value:
+                    resp = self._generate_echo(prompt)
+                case _:
+                    raise ValueError(f"Could not find dev model with name '{self.name_or_path}'")
 
             responses.append(tokenizer.encode(resp))
 
         return torch.LongTensor(responses)
 
     @staticmethod
-    def generate_manual(prompt: str):
+    def _generate_manual(prompt: str):
         """Allows for users to generate responses to the prompt themselves through standard input for debugging purposes
 
         Args:
@@ -57,12 +71,12 @@ class DevModel(PreTrainedModel):
             The manually generated response"""
 
         root_logger.unchecked("[MANUAL PROMPT]\n", prompt)
-        root_logger.info("[MANUAL INSTRUCTIONS] Enter ':s' to submit your response")
+        root_logger.info("[MANUAL INSTRUCTIONS] Enter ':q' on a new line submit your response and to quit")
 
         resp = ""
         while True:
             partial_resp = input("> ").replace("> ", "")
-            if partial_resp == ":s":
+            if partial_resp == ":q":
                 break
             elif partial_resp.startswith(":") and len(partial_resp) == 2:
                 raise ValueError(f"Unrecognized command '{partial_resp}'")
@@ -72,7 +86,7 @@ class DevModel(PreTrainedModel):
         return resp.rstrip("\n")
 
     @staticmethod
-    def generate_echo(prompt: str):
+    def _generate_echo(prompt: str):
         """Simply echoes the prompt
 
         Args:

@@ -75,11 +75,5 @@ def test_ctx_mgr(model_path):
 def test_disable():
 
     FastChatController.disable()
-    fastchat_loaded = False
-    try:
+    with pytest.raises(RuntimeError):
         model_info_from_name("meta-llama/Llama-2-7b-chat-hf", ModelSrc.OPENAI_API)
-        fastchat_loaded = True
-    except RuntimeError:
-        ...
-
-    assert not fastchat_loaded

@@ -34,6 +34,9 @@ class OpenAIAPIModel(PreTrainedModel):
         Returns:
             The generated response tokens"""
 
+        if len(inputs.shape) != 2:
+            raise ValueError("Inputs must be 2D tensors of input token IDs (Ex. Tensor([[101, 98, ...], [...], ...]))")
+
         if "max_new_tokens" in kwargs:
             kwargs["max_tokens"] = kwargs["max_new_tokens"]
             kwargs.pop("max_new_tokens")
