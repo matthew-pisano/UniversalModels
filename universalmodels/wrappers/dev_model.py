@@ -5,6 +5,7 @@ import torch
 from transformers import PreTrainedModel
 from transformers.generation.utils import GenerateOutput
 
+from .wrapper_model import WrapperModel
 from ..mock_tokenizer import MockTokenizer
 from ..logger import root_logger
 
@@ -16,7 +17,7 @@ class DevModelEnum(Enum):
     ECHO = "dev/echo"
 
 
-class DevModel(PreTrainedModel):
+class DevModel(WrapperModel):
     """Developer Model wrapper.  Spoofs pretrained model generation while really generating text through manual input or predetermined methods"""
 
     def __init__(self, model_name: str, **kwargs):
@@ -29,7 +30,19 @@ class DevModel(PreTrainedModel):
         if model_name not in [model.value for model in DevModelEnum]:
             raise ValueError(f"Unknown dev model '{model_name}'")
 
-        self.name_or_path = model_name
+        super().__init__(model_name, **kwargs)
+
+    def generate_text(self, prompt: str,  **kwargs):
+
+        match self.name_or_path:
+            case DevModelEnum.HUMAN.value:
+                response_str = self._generate_manual(prompt)
+            case DevModelEnum.ECHO.value:
+                response_str = self._generate_echo(prompt)
+            case _:
+                raise ValueError(f"Could not find dev model with name '{self.name_or_path}'")
+
+        return response_str
 
     @torch.no_grad()
     def generate(self, inputs: Optional[torch.Tensor] = None, **kwargs) -> GenerateOutput | torch.LongTensor:
@@ -40,26 +53,7 @@ class DevModel(PreTrainedModel):
         Returns:
             The generated response tokens"""
 
-        if len(inputs.shape) != 2:
-            raise ValueError("Inputs must be 2D tensors of input token IDs (Ex. Tensor([[101, 98, ...], [...], ...]))")
-
-        tokenizer = MockTokenizer(self.name_or_path)
-        responses = []
-
-        for encoded_prompt in inputs:
-            prompt = tokenizer.decode(encoded_prompt.tolist())
-
-            match self.name_or_path:
-                case DevModelEnum.HUMAN.value:
-                    resp = self._generate_manual(prompt)
-                case DevModelEnum.ECHO.value:
-                    resp = self._generate_echo(prompt)
-                case _:
-                    raise ValueError(f"Could not find dev model with name '{self.name_or_path}'")
-
-            responses.append(tokenizer.encode(resp))
-
-        return torch.LongTensor(responses)
+        return super().generate(inputs, **kwargs)
 
     @staticmethod
     def _generate_manual(prompt: str):
