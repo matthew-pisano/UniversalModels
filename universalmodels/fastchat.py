@@ -32,7 +32,7 @@ class FastChatCtxMgr:
         FastChatController.open(self.model_path)
         return self
 
-    def __exit__(self):
+    def __exit__(self, exc_type, exc_value, exc_traceback):
         FastChatController.close(self.model_path)
 
 

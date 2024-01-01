@@ -3,7 +3,7 @@ from typing import Optional
 
 import torch
 import openai
-from transformers import PreTrainedModel
+from transformers import PreTrainedModel, PretrainedConfig
 from transformers.generation.utils import GenerateOutput
 
 from ..logger import root_logger
@@ -20,6 +20,7 @@ class OpenAIAPIModel(PreTrainedModel):
         Args:
             model_name: The name of the OpenAI model to use"""
 
+        super().__init__(PretrainedConfig())
         self.name_or_path = model_name
 
     @torch.no_grad()

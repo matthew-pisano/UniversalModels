@@ -1,4 +1,6 @@
-from transformers import PreTrainedTokenizer
+from typing import Union, List
+
+from transformers import PreTrainedTokenizer, AddedToken
 from transformers.tokenization_utils_base import TextInput, PreTokenizedInput, EncodedInput
 
 
@@ -6,7 +8,14 @@ class MockTokenizer(PreTrainedTokenizer):
     """A mock tokenizer to translate strings to character integer ids in a lossless fashion"""
 
     def __init__(self, tokenizer_name: str, **kwargs):
+        super().__init__()
         self.tokenizer_name = tokenizer_name
+
+    def _add_tokens(self, new_tokens: Union[List[str], List[AddedToken]], special_tokens: bool = False) -> int:
+        ...
+
+    def vocab_size(self) -> int:
+        return 50257
 
     @staticmethod
     def encode(text: TextInput | PreTokenizedInput | EncodedInput, **kwargs):
@@ -34,3 +43,7 @@ class MockTokenizer(PreTrainedTokenizer):
             decoded += chr(int(char_id))
 
         return decoded
+
+    def __repr__(self):
+
+        return f"{self.__class__.__name__}(tokenizer_name='{self.tokenizer_name}')"

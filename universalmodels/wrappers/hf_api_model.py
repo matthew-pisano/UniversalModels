@@ -5,7 +5,7 @@ from typing import Optional
 
 import torch
 from huggingface_hub import InferenceClient
-from transformers import PreTrainedModel
+from transformers import PreTrainedModel, AutoTokenizer
 from transformers.generation.utils import GenerateOutput
 
 from ..mock_tokenizer import MockTokenizer
@@ -20,6 +20,12 @@ class HFAPIModel(PreTrainedModel):
         Args:
             model_name: The name of the huggingface model to use
             model_task: The name of the huggingface model task to perform"""
+
+        try:
+            # Check that the model can be loaded by huggingface
+            AutoTokenizer.from_pretrained(model_name)
+        except Exception as e:
+            raise e
 
         self.name_or_path = model_name
         self.model_task = model_task
