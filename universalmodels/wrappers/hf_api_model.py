@@ -81,7 +81,8 @@ class HFAPIModel(WrapperModel):
         return response_str
         
     @torch.no_grad()
-    def generate(self, inputs: Optional[torch.Tensor] = None, do_sample=True, temperature=0.7, max_new_tokens=None, timeout=30, retries=2, **kwargs) -> GenerateOutput | torch.LongTensor:
+    def generate(self, inputs: Optional[torch.Tensor] = None, do_sample=True, temperature=0.7,
+                 max_new_tokens=None, timeout=30, retries=2, **kwargs) -> GenerateOutput | torch.LongTensor:
         """Spoofs the pretrained model generation to make it fit for huggingface API generation
 
         Args:

@@ -69,7 +69,7 @@ class DevModel(WrapperModel):
 
         resp = ""
         while True:
-            partial_resp = input("> ").replace("> ", "")
+            partial_resp = input(">>> ")
             if partial_resp == ":q":
                 break
             elif partial_resp.startswith(":") and len(partial_resp) == 2:

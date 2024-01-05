@@ -32,7 +32,17 @@ class ModelSrc(Enum):
 
 class ModelInfo:
 
-    def __init__(self, pretrained_model_name_or_path: str, model_src: ModelSrc, model_class: PreTrainedModel | None = AutoModelForCausalLM, tokenizer_class: PreTrainedTokenizer | None = AutoTokenizer, model_task: str = None):
+    def __init__(self, pretrained_model_name_or_path: str, model_src: ModelSrc,
+                 model_class: PreTrainedModel | None = AutoModelForCausalLM,
+                 tokenizer_class: PreTrainedTokenizer | None = AutoTokenizer, model_task: str = None):
+        """
+        Args:
+            pretrained_model_name_or_path: The name of the underlying model to use
+            model_src: The suggested source of the model to load. Defaults to AUTO
+            model_class: The class of transformers PreTrainedModel to use
+            tokenizer_class: The class of transformers PreTrainedTokenizer to use
+            model_task: The huggingface task for the model to perform, if applicable"""
+
         self.pretrained_model_name_or_path = pretrained_model_name_or_path
         self.model_src = model_src
         self.model_class = model_class
@@ -128,6 +138,7 @@ def pretrained_from_name(model_name: str, model_src: ModelSrc = ModelSrc.AUTO, m
     Args:
         model_name: The name of the underlying model to use
         model_src: The suggested source of the model to load. Defaults to AUTO
+        model_task: The huggingface task for the model to perform, if applicable
     Returns:
         A transformers pretrained model and tokenizer for usage within the framework"""
 
