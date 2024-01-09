@@ -68,6 +68,7 @@ def model_info_from_name(target_model_name: str, model_src: ModelSrc = ModelSrc.
     Args:
         target_model_name: The name of the underlying model to use
         model_src: The suggested source of the model to load. Defaults to AUTO
+        model_task: The name of the task a huggingface API model should perform, if applicable. Defaults to None
     Returns:
         A ModelInfo instance containing the information necessary to find the given model"""
 

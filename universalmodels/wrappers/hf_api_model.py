@@ -5,11 +5,10 @@ from typing import Optional
 
 import torch
 from huggingface_hub import InferenceClient
-from transformers import PreTrainedModel, AutoTokenizer
+from transformers import AutoTokenizer
 from transformers.generation.utils import GenerateOutput
 
 from .wrapper_model import WrapperModel
-from ..mock_tokenizer import MockTokenizer
 from ..logger import root_logger
 
 

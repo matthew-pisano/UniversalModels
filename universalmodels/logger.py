@@ -20,7 +20,7 @@ class Logger:
     CRITICAL = 50
     QUIET = 60
 
-    def __init__(self, name: str, level=INFO, auto_register=True):
+    def __init__(self, name: str, level=WARNING, auto_register=True):
         self.name = name
         self.level = level
 
@@ -38,31 +38,31 @@ class Logger:
 
     def debug(self, *msg):
         if self.level <= self.DEBUG:
-            print(f"[DEBUG @ {self.current_time()}]", *msg)
+            print(f"[DEBUG {self.name} @ {self.current_time()}]", *msg)
 
     def info(self, *msg):
         if self.level <= self.INFO:
-            print(f"[INFO @ {self.current_time()}]", *msg)
+            print(f"[INFO {self.name} @ {self.current_time()}]", *msg)
 
     def warning(self, *msg):
         if self.level <= self.WARNING:
-            print(f"[WARNING @ {self.current_time()}]", *msg)
+            print(f"[WARNING {self.name} @ {self.current_time()}]", *msg)
 
     def error(self, *msg):
         if self.level <= self.ERROR:
-            print(f"[ERROR @ {self.current_time()}]", *msg)
+            print(f"[ERROR {self.name} @ {self.current_time()}]", *msg)
 
     def critical(self, *msg):
         if self.level <= self.CRITICAL:
-            print(f"[CRITICAL @ {self.current_time()}]", *msg)
+            print(f"[CRITICAL {self.name} @ {self.current_time()}]", *msg)
 
     def unchecked(self, *msg):
-        print(f"[PRINT @ {self.current_time()}]", *msg)
+        print(f"[PRINT {self.name} @ {self.current_time()}]", *msg)
 
     @staticmethod
     def current_time():
         return datetime.datetime.now().strftime('%H:%M:%S')
 
 
-Logger('root')
-root_logger: Logger = _logger_registry['root']
+Logger('universalmodels')
+root_logger: Logger = _logger_registry['universalmodels']

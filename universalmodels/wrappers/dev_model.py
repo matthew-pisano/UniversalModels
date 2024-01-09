@@ -2,11 +2,9 @@ from enum import Enum
 from typing import Optional
 
 import torch
-from transformers import PreTrainedModel
 from transformers.generation.utils import GenerateOutput
 
 from .wrapper_model import WrapperModel
-from ..mock_tokenizer import MockTokenizer
 from ..logger import root_logger
 
 

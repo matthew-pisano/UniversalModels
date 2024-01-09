@@ -1,5 +1,4 @@
 import subprocess
-import time
 from subprocess import Popen
 
 from .logger import root_logger
@@ -40,7 +39,7 @@ class FastChatController:
     """Manages fastchat servers and workers for quicker model inference"""
 
     _workers: dict[str, Worker] = {}
-    controller_process: Popen = None
+    controller_process: Popen | None = None
     _enabled = True
 
     port_generator = (i for i in range(8000, 8005))
@@ -179,5 +178,6 @@ class FastChatController:
                 cls.close(path)
 
             if cls.controller_process is not None:
+                root_logger.info(f"Closing fastchat controller...")
                 cls.controller_process.terminate()
                 cls.controller_process = None

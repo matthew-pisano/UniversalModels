@@ -3,12 +3,10 @@ from typing import Optional
 
 import torch
 import openai
-from transformers import PreTrainedModel, PretrainedConfig
 from transformers.generation.utils import GenerateOutput
 
 from .wrapper_model import WrapperModel
 from ..logger import root_logger
-from ..mock_tokenizer import MockTokenizer
 from ..constants import GLOBAL_SEED
 from ..fastchat import FastChatController
 
@@ -54,7 +52,7 @@ class OpenAIAPIModel(WrapperModel):
                     time.sleep(5)
         # Generation from the fastchat API
         else:
-            openai.api_base = f"http://localhost:{FastChatController.get_worker(self.name_or_path)['port']}/v1"
+            openai.api_base = f"http://localhost:{FastChatController.get_worker(self.name_or_path).port}/v1"
             resp = openai.Completion.create(model=self.name_or_path.split("/")[-1], prompt=prompt, **kwargs)
             response_str = resp["choices"][0]["text"]
 
