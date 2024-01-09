@@ -2,7 +2,8 @@ import time
 from typing import Optional
 
 import torch
-import openai
+from openai import OpenAI
+
 from transformers.generation.utils import GenerateOutput
 
 from .wrapper_model import WrapperModel
@@ -35,15 +36,14 @@ class OpenAIAPIModel(WrapperModel):
 
         # Generation from the normal OpenAI API
         if self.name_or_path.startswith("openai/"):
-
+            client = OpenAI()
             # Loop until a response is successfully generated from the API or the number of retries runs out
             while retries > 0:
                 retries -= 1
                 try:
-                    openai.api_base = "https://api.openai.com/v1"
-                    resp = openai.ChatCompletion.create(model=self.name_or_path.split("/")[-1], messages=[
-                        {"role": "user", "content": prompt}], seed=GLOBAL_SEED, request_timeout=timeout, **kwargs)
-                    response_str = resp["choices"][0]["message"]["content"]
+                    resp = client.chat.completions.create(model=self.name_or_path.split("/")[-1], messages=[
+                        {"role": "user", "content": prompt}], seed=GLOBAL_SEED, timeout=timeout, **kwargs)
+                    response_str = resp.choices[0].message.content
                     break
                 except Exception as e:
                     if retries <= 0:
@@ -52,9 +52,9 @@ class OpenAIAPIModel(WrapperModel):
                     time.sleep(5)
         # Generation from the fastchat API
         else:
-            openai.api_base = f"http://localhost:{FastChatController.get_worker(self.name_or_path).port}/v1"
-            resp = openai.Completion.create(model=self.name_or_path.split("/")[-1], prompt=prompt, **kwargs)
-            response_str = resp["choices"][0]["text"]
+            client = OpenAI(base_url=f"http://localhost:{FastChatController.get_worker(self.name_or_path).port}/v1")
+            resp = client.completions.create(model=self.name_or_path.split("/")[-1], prompt=prompt, **kwargs)
+            response_str = resp.choices[0].text
 
         if response_str is None:
             raise ValueError("Response encoding has not been properly generated")

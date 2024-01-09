@@ -1,5 +1,5 @@
-transformers~=4.36
+transformers~=4.35
 torch~=2.1
-openai~=1.6
+openai==1.7.0
 fschat~=0.2.34
 huggingface-hub~=0.20.2
