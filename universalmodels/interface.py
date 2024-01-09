@@ -34,14 +34,15 @@ class ModelInfo:
 
     def __init__(self, pretrained_model_name_or_path: str, model_src: ModelSrc,
                  model_class: PreTrainedModel | None = AutoModelForCausalLM,
-                 tokenizer_class: PreTrainedTokenizer | None = AutoTokenizer, model_task: str = None):
+                 tokenizer_class: PreTrainedTokenizer | None = AutoTokenizer, model_task: str = None, fp_precision: int = 16):
         """
         Args:
             pretrained_model_name_or_path: The name of the underlying model to use
             model_src: The suggested source of the model to load. Defaults to AUTO
             model_class: The class of transformers PreTrainedModel to use
             tokenizer_class: The class of transformers PreTrainedTokenizer to use
-            model_task: The huggingface task for the model to perform, if applicable"""
+            model_task: The huggingface task for the model to perform, if applicable
+            fp_precision: The precision of the model's calculations.  4-bit and 8-bit precision utilize quantization"""
 
         self.pretrained_model_name_or_path = pretrained_model_name_or_path
         self.model_src = model_src
@@ -49,8 +50,16 @@ class ModelInfo:
         self.tokenizer_class = tokenizer_class
         self.model_task = model_task
 
+        if fp_precision not in [32, 16, 8, 4]:
+            raise ValueError("fp_precision must be one of 32, 16, 8, 4")
+        self._fp_precision = fp_precision
+
         if self.model_src == ModelSrc.HF_API and self.model_task is None:
             raise ValueError("A model task is required to use HuggingFace models")
+
+    @property
+    def fp_precision(self):
+        return self._fp_precision
 
     def as_dict(self):
         return vars(self)
@@ -124,11 +133,24 @@ def pretrained_from_info(model_info: ModelInfo) -> tuple[PreTrainedModel, PreTra
         case ModelSrc.DEV:
             return DevModel(model_info.pretrained_model_name_or_path), MockTokenizer(model_info.pretrained_model_name_or_path)
         case ModelSrc.HF_LOCAL:
+            fp_kwargs = {}
+            match model_info.fp_precision:
+                case 32:
+                    fp_kwargs["torch_dtype"] = torch.float32
+                case 16:
+                    fp_kwargs["torch_dtype"] = torch.bfloat16
+                case 8:
+                    fp_kwargs["load_in_8bit"] = True
+                case 4:
+                    fp_kwargs["load_in_4bit"] = True
+                case _:
+                    raise ValueError("fp_precision must be one of 32, 16, 8, 4")
+
             try:
-                model = model_info.model_class.from_pretrained(model_info.pretrained_model_name_or_path, torch_dtype=torch.bfloat16)
+                model = model_info.model_class.from_pretrained(model_info.pretrained_model_name_or_path, **fp_kwargs)
             except ValueError as e:
                 root_logger.warning(f"Could not load {model_info.pretrained_model_name_or_path} as a {model_info.model_class} model.  Using AutoModel instead.")
-                model = AutoModel.from_pretrained(model_info.pretrained_model_name_or_path, torch_dtype=torch.bfloat16)
+                model = AutoModel.from_pretrained(model_info.pretrained_model_name_or_path, **fp_kwargs)
 
             return model, model_info.tokenizer_class.from_pretrained(model_info.pretrained_model_name_or_path)
 

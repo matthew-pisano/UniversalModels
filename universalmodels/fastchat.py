@@ -1,4 +1,5 @@
 import subprocess
+import time
 from subprocess import Popen
 
 from .logger import root_logger
@@ -170,8 +171,8 @@ class FastChatController:
 
         if model_path is not None:
             root_logger.info(f"Closing {model_path} worker...")
-            cls.get_worker(model_path).worker_process.terminate()
-            cls.get_worker(model_path).server_process.terminate()
+            cls.get_worker(model_path).worker_process.kill()
+            cls.get_worker(model_path).server_process.kill()
             cls._workers.pop(model_path)
         else:
             for path in list(cls._workers.keys()):
@@ -180,4 +181,9 @@ class FastChatController:
             if cls.controller_process is not None:
                 root_logger.info(f"Closing fastchat controller...")
                 cls.controller_process.terminate()
+
+                time.sleep(2)
+                if cls.controller_process.poll() is None:
+                    root_logger.warning("fastchat controller process was not terminated.  Forcing a kill")
+                    cls.controller_process.kill()
                 cls.controller_process = None
