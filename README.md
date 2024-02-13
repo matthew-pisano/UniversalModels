@@ -57,4 +57,5 @@ oai_response = oai_tokenizer.decode(oai_resp_tokens)
 print(oai_response)
 ```
 
-***NOTE:*** Make sure your API keys are set for OpenAI and Huggingface before using models that require them!
+> [!IMPORTANT]
+> Make sure your API keys are set for OpenAI and Huggingface before using models that require them!
