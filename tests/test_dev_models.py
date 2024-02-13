@@ -20,7 +20,7 @@ def response():
 
 def test_invalid_model():
     with pytest.raises(ValueError):
-        DevModel("openai/gpt-3.5")
+        DevModel("openai/gpt-3.5-turbo")
 
 
 def test_unknown_model():
