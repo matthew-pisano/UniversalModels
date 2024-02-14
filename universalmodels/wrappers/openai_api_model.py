@@ -1,4 +1,3 @@
-import time
 from typing import Optional
 
 import torch
@@ -7,7 +6,6 @@ from openai import OpenAI
 from transformers.generation.utils import GenerateOutput
 
 from .wrapper_model import WrapperModel
-from ..logger import root_logger
 from ..constants import GLOBAL_SEED
 from ..fastchat import FastChatController
 
@@ -20,46 +18,36 @@ class OpenAIAPIModel(WrapperModel):
         Args:
             model_name: The name of the OpenAI model to use"""
 
+        if model_name.startswith("openai/"):
+            client = OpenAI()
+            valid_models = [model.id for model in client.models.list()]
+            if model_name.replace("openai/", "") not in valid_models:
+                raise ValueError(f"Unknown OpenAI model '{model_name}'")
+        if model_name.startswith("dev/"):
+            raise ValueError("OpenAI models must not have names in the form of 'dev/*'")
+
         super().__init__(model_name, **kwargs)
 
-    def generate_text(self, prompt: str, timeout=10, retries=2, **kwargs):
+    def generate_text(self, prompt: str, timeout=10, **kwargs):
         """Generates a text response from the given text prompt
 
         Args:
             prompt: The plain text prompt
             timeout: The timeout for API requests
-            retries: The number of retries to perform after an API error before throwing an exception
         Returns:
             The plain text OpenAI model response"""
 
-        response_str = None
-
-        # Generation from the normal OpenAI API
         if self.name_or_path.startswith("openai/"):
+            # Generation from the normal OpenAI API
             client = OpenAI()
-            # Loop until a response is successfully generated from the API or the number of retries runs out
-            while retries > 0:
-                retries -= 1
-                try:
-                    resp = client.chat.completions.create(model=self.name_or_path.split("/")[-1], messages=[
-                        {"role": "user", "content": prompt}], seed=GLOBAL_SEED, timeout=timeout, **kwargs)
-                    response_str = resp.choices[0].message.content
-                    break
-                except Exception as e:
-                    if retries <= 0:
-                        raise e
-                    root_logger.warning(f"Received error {e} from OpenAI API.  Retrying...")
-                    time.sleep(5)
-        # Generation from the fastchat API
+            resp = client.chat.completions.create(model=self.name_or_path.split("/")[-1], messages=[
+                {"role": "user", "content": prompt}], seed=GLOBAL_SEED, timeout=timeout, **kwargs)
+            return resp.choices[0].message.content
         else:
+            # Generation from the fastchat API
             client = OpenAI(base_url=f"http://localhost:{FastChatController.get_worker(self.name_or_path).port}/v1")
             resp = client.completions.create(model=self.name_or_path.split("/")[-1], prompt=prompt, **kwargs)
-            response_str = resp.choices[0].text
-
-        if response_str is None:
-            raise ValueError("Response encoding has not been properly generated")
-
-        return response_str
+            return resp.choices[0].text
 
     @torch.no_grad()
     def generate(self, inputs: Optional[torch.Tensor] = None, timeout=10, retries=2, **kwargs) -> GenerateOutput | torch.LongTensor:

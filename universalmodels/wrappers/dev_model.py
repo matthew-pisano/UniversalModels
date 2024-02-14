@@ -5,7 +5,7 @@ import torch
 from transformers.generation.utils import GenerateOutput
 
 from .wrapper_model import WrapperModel
-from ..logger import root_logger
+from ..constants import logger
 
 
 class DevModelEnum(Enum):
@@ -34,13 +34,11 @@ class DevModel(WrapperModel):
 
         match self.name_or_path:
             case DevModelEnum.HUMAN.value:
-                response_str = self._generate_manual(prompt)
+                return self._generate_manual(prompt)
             case DevModelEnum.ECHO.value:
-                response_str = self._generate_echo(prompt)
+                return self._generate_echo(prompt)
             case _:
                 raise ValueError(f"Could not find dev model with name '{self.name_or_path}'")
-
-        return response_str
 
     @torch.no_grad()
     def generate(self, inputs: Optional[torch.Tensor] = None, **kwargs) -> GenerateOutput | torch.LongTensor:
@@ -62,8 +60,8 @@ class DevModel(WrapperModel):
         Returns:
             The manually generated response"""
 
-        root_logger.unchecked("[MANUAL PROMPT]\n", prompt)
-        root_logger.info("[MANUAL INSTRUCTIONS] Enter ':q' on a new line submit your response and to quit")
+        print("\n[MANUAL PROMPT]\n", prompt)
+        logger.info("[MANUAL INSTRUCTIONS] Enter ':q' on a new line submit your response and to quit")
 
         resp = ""
         while True:

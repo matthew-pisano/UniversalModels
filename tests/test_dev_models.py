@@ -10,7 +10,7 @@ from universalmodels.wrappers.dev_model import DevModel
 
 @pytest.fixture
 def prompt():
-    return "Hello there."
+    return "Continue: Hello there..."
 
 
 @pytest.fixture

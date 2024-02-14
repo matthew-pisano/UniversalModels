@@ -1,10 +1,13 @@
+import time
 from typing import Optional
 
+import openai
 import torch
 from transformers import PreTrainedModel, PretrainedConfig
 from transformers.generation.utils import GenerateOutput
 
-from universalmodels.mock_tokenizer import MockTokenizer
+from ..constants import logger
+from ..mock_tokenizer import MockTokenizer
 
 
 class WrapperModel(PreTrainedModel):
@@ -44,7 +47,33 @@ class WrapperModel(PreTrainedModel):
 
         for encoded_prompt in inputs:
             prompt = tokenizer.decode(encoded_prompt.tolist())
-            resp = self.generate_text(prompt, **kwargs)
+            resp = self.retry_generate(prompt, **kwargs)
             responses.append(tokenizer.encode(resp))
 
         return torch.LongTensor(responses)
+
+    def retry_generate(self, prompt: str, retries=3, **kwargs) -> str:
+        """Retries the generation of a text response from the given text prompt while an error is thrown
+
+        Args:
+            prompt: The plain text prompt
+            retries: The number of retries to perform after an error before throwing an exception
+        Returns:
+            The generated response tokens"""
+
+        if retries < 1:
+            raise ValueError("Number of retries must be at least 1")
+
+        # Linear backoff for retries
+        backoff = 5
+        # Loop until a response is successfully generated or the number of retries runs out
+        while retries > 0:
+            retries -= 1
+            try:
+                return self.generate_text(prompt, **kwargs)
+            except (RuntimeError, openai.OpenAIError) as e:
+                if retries <= 0:
+                    raise e
+                logger.warning(f"Model {self.name_or_path} received error {e}.\nRetrying ({retries} remaining)...")
+                time.sleep(backoff)
+                backoff += 2

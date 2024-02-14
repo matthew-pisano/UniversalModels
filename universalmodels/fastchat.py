@@ -2,7 +2,7 @@ import subprocess
 import time
 from subprocess import Popen
 
-from .logger import root_logger
+from .constants import logger
 
 
 class Worker:
@@ -107,6 +107,9 @@ class FastChatController:
         Returns:
             The worker associated with the given model"""
 
+        if model_path not in cls._workers:
+            raise ValueError(f"No worker found for model '{model_path}'")
+
         return cls._workers[model_path]
 
     @classmethod
@@ -131,7 +134,7 @@ class FastChatController:
             port = next(cls.port_generator)
 
         if cls.controller_process is None:
-            root_logger.info("Initializing fastchat controller...")
+            logger.info("Initializing fastchat controller...")
             cls.controller_process = Popen(['python3', '-m', 'fastchat.serve.controller'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             try:
                 stdout, stderr = cls.controller_process.communicate(timeout=3)
@@ -140,7 +143,7 @@ class FastChatController:
                 ...
 
         if model_path not in cls._workers:
-            root_logger.info(f"Initializing {model_path} worker...")
+            logger.info(f"Initializing {model_path} worker...")
             worker_process = Popen(['python3', '-m', 'fastchat.serve.model_worker', '--model-path', model_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             try:
                 stdout, stderr = worker_process.communicate(timeout=10)
@@ -148,7 +151,7 @@ class FastChatController:
             except subprocess.TimeoutExpired:
                 ...
 
-            root_logger.info("Starting fastchat openai server...")
+            logger.info("Starting fastchat openai server...")
             server_process = Popen(['python3', '-m', 'fastchat.serve.openai_api_server', '--host', 'localhost', '--port', str(port)], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             try:
                 stdout, stderr = server_process.communicate(timeout=15)
@@ -158,7 +161,7 @@ class FastChatController:
 
             cls._workers[model_path] = Worker(model_path, port, worker_process, server_process)
 
-        root_logger.info("Started!")
+        logger.info("Started!")
 
         return cls._workers[model_path]
 
@@ -170,7 +173,7 @@ class FastChatController:
             model_path: The path of the model to close.  Closes all models if this is None"""
 
         if model_path is not None:
-            root_logger.info(f"Closing {model_path} worker...")
+            logger.info(f"Closing {model_path} worker...")
             cls.get_worker(model_path).worker_process.kill()
             cls.get_worker(model_path).server_process.kill()
             cls._workers.pop(model_path)
@@ -179,11 +182,11 @@ class FastChatController:
                 cls.close(path)
 
             if cls.controller_process is not None:
-                root_logger.info(f"Closing fastchat controller...")
+                logger.info(f"Closing fastchat controller...")
                 cls.controller_process.terminate()
 
                 time.sleep(2)
                 if cls.controller_process.poll() is None:
-                    root_logger.warning("fastchat controller process was not terminated.  Forcing a kill")
+                    logger.warning("fastchat controller process was not terminated.  Forcing a kill")
                     cls.controller_process.kill()
                 cls.controller_process = None

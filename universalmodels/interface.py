@@ -3,8 +3,8 @@ from enum import Enum
 import torch
 from transformers import PreTrainedModel, PreTrainedTokenizer, LlamaTokenizer, AutoTokenizer, AutoModelForCausalLM, LlamaForCausalLM, AutoModel
 
+from .constants import logger
 from .fastchat import FastChatController
-from .logger import root_logger
 from .mock_tokenizer import MockTokenizer
 from .wrappers.dev_model import DevModel
 from .wrappers.hf_api_model import HFAPIModel
@@ -42,7 +42,7 @@ class ModelInfo:
             model_class: The class of transformers PreTrainedModel to use
             tokenizer_class: The class of transformers PreTrainedTokenizer to use
             model_task: The huggingface task for the model to perform, if applicable
-            fp_precision: The precision of the model's calculations.  4-bit and 8-bit precision utilize quantization"""
+            fp_precision: The precision of the model's calculations.  4-bit and 8-bit precision use quantization"""
 
         self.pretrained_model_name_or_path = pretrained_model_name_or_path
         self.model_src = model_src
@@ -123,7 +123,7 @@ def pretrained_from_info(model_info: ModelInfo) -> tuple[PreTrainedModel, PreTra
     if model_info.model_src == ModelSrc.AUTO:
         model_info = model_info_from_name(model_info.pretrained_model_name_or_path)
 
-    root_logger.debug(f"Loading a pretrained model {model_info.pretrained_model_name_or_path} from {model_info.model_src}")
+    logger.debug(f"Loading a pretrained model {model_info.pretrained_model_name_or_path} from {model_info.model_src}")
 
     match model_info.model_src:
         case ModelSrc.OPENAI_API:
@@ -149,7 +149,7 @@ def pretrained_from_info(model_info: ModelInfo) -> tuple[PreTrainedModel, PreTra
             try:
                 model = model_info.model_class.from_pretrained(model_info.pretrained_model_name_or_path, **fp_kwargs)
             except ValueError as e:
-                root_logger.warning(f"Could not load {model_info.pretrained_model_name_or_path} as a {model_info.model_class} model.  Using AutoModel instead.")
+                logger.warning(f"Could not load {model_info.pretrained_model_name_or_path} as a {model_info.model_class} model.  Using AutoModel instead.")
                 model = AutoModel.from_pretrained(model_info.pretrained_model_name_or_path, **fp_kwargs)
 
             return model, model_info.tokenizer_class.from_pretrained(model_info.pretrained_model_name_or_path)

@@ -1,6 +1,5 @@
 import json
 import os
-import time
 from typing import Optional
 
 import torch
@@ -9,7 +8,7 @@ from transformers import AutoTokenizer
 from transformers.generation.utils import GenerateOutput
 
 from .wrapper_model import WrapperModel
-from ..logger import root_logger
+from ..constants import logger
 
 
 class HFAPIModel(WrapperModel):
@@ -30,7 +29,7 @@ class HFAPIModel(WrapperModel):
         super().__init__(model_name, **kwargs)
         self.model_task = model_task
 
-    def generate_text(self, prompt: str, do_sample=True, temperature=0.7, max_new_tokens=None, timeout=10, retries=2, **kwargs):
+    def generate_text(self, prompt: str, do_sample=True, temperature=0.7, max_new_tokens=None, timeout=10, **kwargs):
         """Generates a text response from the given text prompt
         
         Args:
@@ -39,7 +38,6 @@ class HFAPIModel(WrapperModel):
             temperature: The temperature of the model
             max_new_tokens: The maximum number of new tokens to generate
             timeout: The timeout for API requests
-            retries: The number of retries to perform after an API error before throwing an exception
         Returns:
             The plain text huggingface model response"""
 
@@ -52,33 +50,17 @@ class HFAPIModel(WrapperModel):
 
         char_limit = 450
         if len(prompt) > char_limit:
-            root_logger.warning(f"Prompt given to Huggingface API is too long! {len(prompt)} > {char_limit}.  This prompt will be truncated.")
+            logger.warning(f"Prompt given to Huggingface API is too long! {len(prompt)} > {char_limit}.  This prompt will be truncated.")
             prompt = prompt[:char_limit // 2] + prompt[-char_limit // 2:]
 
         inference_client = InferenceClient(model=self.name_or_path, token=os.environ.get("HF_API_KEY"), timeout=timeout)
+        resp = json.loads(inference_client.post(json={"inputs": prompt, "parameters": hf_params}).decode())
 
-        # Loop until a response is successfully generated from the API or the number of retries runs out
-        response_str = None
-        while retries > 0:
-            retries -= 1
-            try:
-                resp = json.loads(inference_client.post(json={"inputs": prompt, "parameters": hf_params}).decode())
-                response_str = resp[0]["generated_text"]
-                if 'error' not in resp:
-                    break
-                if retries <= 0:
-                    raise RuntimeError(f"Received error from HuggingFace API: {resp['error']}")
-            except Exception as e:
-                if retries <= 0:
-                    raise e
-                root_logger.warning(f"Received error {e} from HuggingFace API.  Retrying...")
-                time.sleep(10)
+        if 'error' in resp:
+            raise RuntimeError(f"Received error from HuggingFace API: {resp['error']}")
 
-        if response_str is None:
-            raise ValueError("Response encoding has not been properly generated")
-        
-        return response_str
-        
+        return resp[0]["generated_text"]
+
     @torch.no_grad()
     def generate(self, inputs: Optional[torch.Tensor] = None, do_sample=True, temperature=0.7,
                  max_new_tokens=None, timeout=30, retries=2, **kwargs) -> GenerateOutput | torch.LongTensor:

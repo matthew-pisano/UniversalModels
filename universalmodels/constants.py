@@ -1,7 +1,15 @@
 import os
+import logging
+import sys
 
 import transformers
 
+logger = logging.getLogger("UniversalModels")
+logger.setLevel(logging.INFO)
+console_handler = logging.StreamHandler(sys.stdout)
+console_handler.setLevel(logging.INFO)
+console_handler.setFormatter(logging.Formatter('[%(levelname)s %(name)s @ %(asctime)s] %(message)s'))
+logger.addHandler(console_handler)
 
 GLOBAL_SEED = None
 
