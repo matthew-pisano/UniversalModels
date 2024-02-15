@@ -161,8 +161,6 @@ class FastChatController:
 
             cls._workers[model_path] = Worker(model_path, port, worker_process, server_process)
 
-        logger.info("Started!")
-
         return cls._workers[model_path]
 
     @classmethod

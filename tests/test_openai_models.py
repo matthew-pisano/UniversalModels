@@ -7,6 +7,7 @@ from torch import Tensor
 from dotenv import load_dotenv
 
 from universalmodels.mock_tokenizer import MockTokenizer
+from universalmodels.wrappers.dev_model import DevModelEnum
 from universalmodels.wrappers.openai_api_model import OpenAIAPIModel
 
 
@@ -25,7 +26,7 @@ def response():
 
 def test_invalid_model():
     with pytest.raises(ValueError):
-        OpenAIAPIModel("dev/human")
+        OpenAIAPIModel(DevModelEnum.MULTILINE.value)
 
 
 def test_unknown_model():

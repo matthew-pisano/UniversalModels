@@ -5,7 +5,7 @@ import pytest
 from torch import Tensor
 
 from universalmodels.mock_tokenizer import MockTokenizer
-from universalmodels.wrappers.dev_model import DevModel
+from universalmodels.wrappers.dev_model import DevModel, DevModelEnum
 
 
 @pytest.fixture
@@ -30,20 +30,32 @@ def test_unknown_model():
 
 def test_echo_model(prompt):
 
-    model = DevModel("dev/echo")
-    tokenizer = MockTokenizer("dev/echo")
+    model = DevModel(DevModelEnum.ECHO.value)
+    tokenizer = MockTokenizer(DevModelEnum.ECHO.value)
     tokens = tokenizer.encode(prompt)
     resp_tokens = model.generate(Tensor([tokens]).int())[0]
     decoded = tokenizer.decode(resp_tokens)
     assert decoded == prompt
 
 
-def test_human_model(prompt, response, monkeypatch):
+def test_multiline_model(prompt, response, monkeypatch):
 
     monkeypatch.setattr(sys, 'stdin', io.StringIO(response+"\n:q"))
 
-    model = DevModel("dev/human")
-    tokenizer = MockTokenizer("dev/human")
+    model = DevModel(DevModelEnum.MULTILINE.value)
+    tokenizer = MockTokenizer(DevModelEnum.MULTILINE.value)
+    tokens = tokenizer.encode(prompt)
+    resp_tokens = model.generate(Tensor([tokens]).int())[0]
+    decoded = tokenizer.decode(resp_tokens)
+    assert decoded == response
+
+
+def test_singleline_model(prompt, response, monkeypatch):
+
+    monkeypatch.setattr(sys, 'stdin', io.StringIO(response))
+
+    model = DevModel(DevModelEnum.SINGLELINE.value)
+    tokenizer = MockTokenizer(DevModelEnum.SINGLELINE.value)
     tokens = tokenizer.encode(prompt)
     resp_tokens = model.generate(Tensor([tokens]).int())[0]
     decoded = tokenizer.decode(resp_tokens)

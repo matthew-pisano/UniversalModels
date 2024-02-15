@@ -11,7 +11,8 @@ from ..constants import logger
 class DevModelEnum(Enum):
     """An enum of the valid dev models"""
 
-    HUMAN = "dev/human"
+    MULTILINE = "dev/multiline"
+    SINGLELINE = "dev/singleline"
     ECHO = "dev/echo"
 
 
@@ -33,8 +34,10 @@ class DevModel(WrapperModel):
     def generate_text(self, prompt: str,  **kwargs):
 
         match self.name_or_path:
-            case DevModelEnum.HUMAN.value:
-                return self._generate_manual(prompt)
+            case DevModelEnum.MULTILINE.value:
+                return self._generate_multiline(prompt)
+            case DevModelEnum.SINGLELINE.value:
+                return self._generate_singleline(prompt)
             case DevModelEnum.ECHO.value:
                 return self._generate_echo(prompt)
             case _:
@@ -52,8 +55,8 @@ class DevModel(WrapperModel):
         return super().generate(inputs, **kwargs)
 
     @staticmethod
-    def _generate_manual(prompt: str):
-        """Allows for users to generate responses to the prompt themselves through standard input for debugging purposes
+    def _generate_multiline(prompt: str):
+        """Allows for users to generate multiline responses to the prompt themselves through standard input for debugging purposes
 
         Args:
             prompt: The prompt to show to standard output
@@ -74,6 +77,20 @@ class DevModel(WrapperModel):
             resp += partial_resp+"\n"
 
         return resp.rstrip("\n")
+
+    @staticmethod
+    def _generate_singleline(prompt: str):
+        """Allows for users to generate single line responses to the prompt themselves through standard input for debugging purposes
+
+        Args:
+            prompt: The prompt to show to standard output
+        Returns:
+            The manually generated response"""
+
+        print("\n[MANUAL PROMPT]\n", prompt)
+        logger.info("[MANUAL INSTRUCTIONS] Enter a new line submit your response and to quit")
+
+        return input(">>> ").rstrip("\n")
 
     @staticmethod
     def _generate_echo(prompt: str):
