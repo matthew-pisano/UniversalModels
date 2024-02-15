@@ -5,6 +5,7 @@ from transformers import PreTrainedModel, PreTrainedTokenizer, LlamaTokenizer, A
 
 from .constants import logger
 from .fastchat import FastChatController
+from .mock_model import MockModel
 from .mock_tokenizer import MockTokenizer
 from .wrappers.dev_model import DevModel
 from .wrappers.hf_api_model import HFAPIModel
@@ -16,6 +17,9 @@ class ModelSrc(Enum):
 
     AUTO = "auto"
     """Placeholder value to automatically decide the model source"""
+
+    NO_LOAD = "no_load"
+    """Does not load a model.  Used for evaluation when a model is specified, but no inference is done"""
 
     HF_LOCAL = "huggingface_local"
     """Models are downloaded locally and run on a GPU"""
@@ -81,6 +85,9 @@ def model_info_from_name(target_model_name: str, model_src: ModelSrc = ModelSrc.
     Returns:
         A ModelInfo instance containing the information necessary to find the given model"""
 
+    if model_src == ModelSrc.NO_LOAD:
+        return ModelInfo(target_model_name, ModelSrc.NO_LOAD, None, None, model_task=model_task)
+
     if model_src == ModelSrc.AUTO:
         if target_model_name.startswith("dev/"):
             model_src = ModelSrc.DEV
@@ -109,6 +116,8 @@ def model_info_from_name(target_model_name: str, model_src: ModelSrc = ModelSrc.
             tokenizer_class = LlamaTokenizer if target_model_name.startswith("meta-llama/") else AutoTokenizer
             model_class = LlamaForCausalLM if target_model_name.startswith("meta-llama/") else AutoModelForCausalLM
             return ModelInfo(target_model_name, ModelSrc.HF_LOCAL, model_class, tokenizer_class)
+        case _:
+            raise ValueError(f"Invalid model source {model_src}")
 
 
 def pretrained_from_info(model_info: ModelInfo) -> tuple[PreTrainedModel, PreTrainedTokenizer]:
@@ -126,6 +135,8 @@ def pretrained_from_info(model_info: ModelInfo) -> tuple[PreTrainedModel, PreTra
     logger.debug(f"Loading a pretrained model {model_info.pretrained_model_name_or_path} from {model_info.model_src}")
 
     match model_info.model_src:
+        case ModelSrc.NO_LOAD:
+            return MockModel(model_info.pretrained_model_name_or_path, model_info.model_task), MockTokenizer(model_info.pretrained_model_name_or_path)
         case ModelSrc.OPENAI_API:
             return OpenAIAPIModel(model_info.pretrained_model_name_or_path), MockTokenizer(model_info.pretrained_model_name_or_path)
         case ModelSrc.HF_API:
@@ -153,6 +164,8 @@ def pretrained_from_info(model_info: ModelInfo) -> tuple[PreTrainedModel, PreTra
                 model = AutoModel.from_pretrained(model_info.pretrained_model_name_or_path, **fp_kwargs)
 
             return model, model_info.tokenizer_class.from_pretrained(model_info.pretrained_model_name_or_path)
+        case _:
+            raise ValueError(f"Invalid model source {model_info.model_src}")
 
 
 def pretrained_from_name(model_name: str, model_src: ModelSrc = ModelSrc.AUTO, model_task: str = None):

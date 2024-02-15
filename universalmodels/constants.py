@@ -21,7 +21,7 @@ def set_seed(seed: int):
         seed: The seed to set"""
 
     global GLOBAL_SEED
-    print(f"Setting random seed to {seed}")
+    logger.info(f"Setting random seed to {seed}")
     GLOBAL_SEED = seed
     transformers.set_seed(GLOBAL_SEED)
     # Set a fixed value for the hash seed
