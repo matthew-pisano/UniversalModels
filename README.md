@@ -8,26 +8,49 @@ This works by mock `transformers.PreTrainedModel` classes that share the same `g
 
 This package is best used in projects that use multiple different model sources interchangeably.  In these kinds of projects, a unified generation interface greatly simplifies a lot of code.  For example, a project that uses text generated from both Huggingface models and GPT models from OpenAI's API.
 
+### Fine-Gained Source Control
+
+An advantage of this package is that it can either automatically resolve the source of a model from its name, or you can specify the source (OpenAI, Huggingface, etc.) manually.  This can be done through an extra parameter to the `pretrained_from_...()` methods.  For example:
+
+```python
+from universalmodels.interface import pretrained_from_name, ModelSrc
+
+model_name = "mistralai/Mistral-7B-v0.1"
+# This will automatically resolve the model's source to 
+# a local Huggingface transformers model (ModelSrc.HF_LOCAL)
+local_model, tokenizer = pretrained_from_name(model_name, model_src=ModelSrc.AUTO)
+
+# This will attempt to start the FastChat service and run 
+# a local instance of the OpenAI API to run optimized generation
+fschat_model, tokenizer = pretrained_from_name(model_name, model_src=ModelSrc.OPENAI_API)
+
+# This will create a mock model without any generation logic attached.
+# This is useful for when the shell of a model is needed as a reference.
+# This option does not load any local models into memory or activate FastChat.
+mock_model, tokenizer = pretrained_from_name(model_name, model_src=ModelSrc.NO_LOAD)
+```
+
 ## Quick Start
 
-### Installing from Source
+### Installing from PyPI
 
-1. Clone repository
+```bash
+pip3 install "universalmodels[fastchat]"
+```
+
+### Installing from Source
 
 ```bash
 git clone https://github.com/matthew-pisano/UniversalModels
 cd UniversalModels
-```
-
-2. Install package
-
-```bash
 pip3 install -e ".[fastchat]"
 ```
 
 Installing the `fastchat` extra enables support for using fastchat on compatible locally installed huggingface models.  See [FastChat supported models](https://github.com/lm-sys/FastChat/blob/main/docs/model_support.md) for more information on which models are supported.
 
 ### Example Usage
+
+In the following example, note that the interfaces for the Huggingface and OpenAI modles are the same.  This is the primary benefit of using this package.
 
 ```python
 import torch
